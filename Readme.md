@@ -146,7 +146,7 @@ class FileUploadController extends Controller
 
     public function destroy($id)
     {
-        $file =  FileUpload::find($id);
+        $search =  FileUpload::find($id);
         FileUpload::find($id)->delete();
         $path = storage_path('files/uploads/'.$search->path.'/'.$search->name);
         if (file_exists($path)) {

@@ -5,13 +5,13 @@
 
             <label v-if="!forUpload" class="btn btn-primary bgicon" for='file'>
                 Selecionar arquivo
-                <input id="file" ref="file" type='file' style="display:none" @change="handleFileUpload">
+                <input @change="handleFileUpload" id="file" ref="file" type='file' style="display:none">
             </label>
               
-            <a v-if="forUpload" class="btn btn-danger bgicon" @click="cancelFile()">
+            <a v-if="forUpload" @click="cancelFile()" class="btn btn-danger bgicon" style="color: white">
                 <i class="fa fa-undo"></i> Cancelar
             </a>
-            <a v-if="forUpload" class="btn btn-primary bgicon" @click="createFile()">
+            <a v-if="forUpload" @click="createFile()" class="btn btn-primary bgicon" style="color: white">
                 <i class="fa fa-cloud-upload"></i> Upload
             </a>
 
@@ -22,8 +22,8 @@
                 {{error}}
             </span>
 
-            <div v-if="forUpload" class="progress" style="padding-top: 3px">
-                <div class="progress-bar" role="progressbar" :style="{width}" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+            <div  v-if="forUpload" class="progress" style="padding-top: 3px">
+                <div class="progress-bar" role="progressbar" :style="{'width' : width + '%'}" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
             </div>
             
         </div>
@@ -47,10 +47,10 @@
                                 </td>
                                 <td>
                                     <div class="btn-group" role="group" aria-label="First group">
-                                        <a type="button" class="btn btn-primary bgicon" @click="showFile(u.id)" target="_black">
+                                        <a type="button" @click="showFile(u.id)" target="_black" class="btn btn-primary" style="color: white">
                                             <i class="fa fa-eye"></i> Ver
                                         </a>
-                                        <a type="button" class="btn btn-danger bgicon" @click="removeFile(u.id)">
+                                        <a type="button" @click="removeFile(u.id)" class="btn btn-danger" style="color: white">
                                             <i class="fa fa-trash"></i> Apagar
                                         </a>
                                     </div>
@@ -83,7 +83,6 @@
       // depois de montado
       beforeMount(){
           this.listFile(); 
-          this.progress();
       },
       methods: {
         // antes de ser feito o upload
@@ -124,8 +123,15 @@
             });
         },
         progress(){
-            let count = 0;
-            setTimeout(()=>{ this.width = count++; }, 200)
+            setTimeout(()=>{ 
+                    if(this.width < 100) {
+                        this.width += 1; 
+                        this.progress();
+                    }else{
+                       this.cancelFile(); 
+                    }
+                }, 25);
+            
         },
         // listagem dos arquivos existentes
         listFile(){
@@ -133,7 +139,6 @@
             axios
             .get(urlIndex)
             .then((response) => (this.uploaded = response.data))
-            .then(this.forUpload = false)
             .catch(error => console.log(error));
         },
         showFile(id){
@@ -154,7 +159,7 @@
            let params = this.params ? this.params + '/' : '';
            let baseUrl = getUrl.protocol + "//" + getUrl.host + "/" + getUrl.pathname.split('/')[1]+"/"+params;
            
-           return baseUrl;
+        return baseUrl;
         }
       }
     }
