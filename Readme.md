@@ -5,7 +5,7 @@
 
 Pré requisitos:
 Laravel >= 5.5.*
-Bootstrap 4 (apenas o css)
+Bootstrap 4 (apenas o css)  
 Font-Awesome (para os icones)
 
 ## Configuração do Laravel:
@@ -83,12 +83,11 @@ Criar controller
 
 ```
 php artisan make:controller FileUploadController --resource
-``
+```
 
 Um exemplo de controller
 
 ```
-...
 use File;
 use Response;
 Use App\FileUpload;
@@ -164,7 +163,7 @@ class FileUploadController extends Controller
 }
 ```
 
-## Configuração do Vue
+**Configuração do Vue**
 
 Caso não tenha iniciado o Vue dê os comados:
 
@@ -175,11 +174,13 @@ npm install
 **Obs: o Vue precisa ter uma tag com id="app" ou outra definida dentro de resources/assets/js/app.js no objeto Vue em el: '#app'**
 
 Na pasta resources/assets/js clone esse repositório:
+
 ```
 git clone https://github.com/EmersonBraun/fileupload-laravel-vue.git
 ```
 
 Registre o componente em resources/assets/js/app.js
+
 
 ```
 Vue.component('file-upload', require('./fileupload-laravel-vue/FileUpload.vue'));
