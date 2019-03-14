@@ -2,48 +2,56 @@
     <div class="card">
 
         <div class="card-header">
-            <label v-if="!forUpload" class="btn btn-primary" style="color: white" for='file'>
+
+            <label v-if="!forUpload" class="btn btn-primary bgicon" for='file'>
                 Selecionar arquivo
                 <input id="file" ref="file" type='file' style="display:none" @change="handleFileUpload">
             </label>
+              
+            <a v-if="forUpload" class="btn btn-danger bgicon" @click="cancelFile()">
+                <i class="fa fa-undo"></i> Cancelar
+            </a>
+            <a v-if="forUpload" class="btn btn-primary bgicon" @click="createFile()">
+                <i class="fa fa-cloud-upload"></i> Upload
+            </a>
+
             <span v-if="file.name">
                 {{ file.name }}
             </span>
             <span v-if="error" style="color: red">
                 {{error}}
-            </span>  
-            <a v-if="forUpload" class="btn btn-primary" @click="create()" style="color: white">
-                <i class="fa fa-cloud-upload"></i> Upload
-            </a>
-            <a v-if="forUpload" class="btn btn-danger" @click="cancelFile()" style="color: white">
-                <i class="fa fa-undo"></i> Cancelar
-            </a>
+            </span>
+
+            <div v-if="forUpload" class="progress" style="padding-top: 3px">
+                <div class="progress-bar" role="progressbar" :style="{width}" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+            
         </div>
 
         <div v-if="this.uploaded.length" class="card-body"> 
             <div class="row">
                 <div class="col-sm-12">
-                    <table class="table table-hover table-striped">
+                    <table class="table table-hover">
                         <thead>
                             <tr>
-                                <th scope="col">#</th>
-                                <th scope="col">Nome/link</th>
-                                <th scope="col">Ações</th>
+                                <th class="col-sm-2">#</th>
+                                <th class="col-sm-8">Nome/link</th>
+                                <th class="col-sm-2">Ações</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr v-for="(u , index) in uploaded">
-                                <th scope="row">{{index}}</th>
+                                <td>{{index}}</td>
                                 <td>
-                                    {{ u.filename}}
+                                    {{ u.name}}
                                 </td>
                                 <td>
                                     <div class="btn-group" role="group" aria-label="First group">
-                                        <a type="button" class="btn btn-primary" :href="u.url" target="_black">
-                                            <i class="fa fa-eye"></i>Ver
+                                        <a type="button" class="btn btn-primary bgicon" @click="showFile(u.id)" target="_black">
+                                            <i class="fa fa-eye"></i> Ver
                                         </a>
-                                        <a type="button" class="btn btn-danger" @click="remove(u.id)">
-                                            <i class="fa fa-trash"></i>Apagar
+                                        <a type="button" class="btn btn-danger bgicon" @click="removeFile(u.id)">
+                                            <i class="fa fa-trash"></i> Apagar
                                         </a>
                                     </div>
                                 </td>
@@ -59,7 +67,7 @@
 
 <script>
     export default {
-      props: ['action','ext','obs','apagados','params'],
+      props: ['action','ext','params'],
       data() {
           return {
               file: '',
@@ -69,19 +77,19 @@
               headers: {
                 'Content-Type': 'multipart/form-data'
               },
+              width: 0,
           }
       },
       // depois de montado
       beforeMount(){
-          this.list(); 
-          this.getBaseUrl();
+          this.listFile(); 
+          this.progress();
       },
       methods: {
         // antes de ser feito o upload
         handleFileUpload(){
           this.file = this.$refs.file.files[0];
           let filetype = this.file.type.split('/')[1];
-          console.log(filetype)
 
           if (!this.ext.includes(filetype)) {
             this.forUpload = false;
@@ -99,31 +107,46 @@
           this.forUpload = false;
         },
         // envio do arquivo
-        create(){
+        createFile(){
             let urlCreate = this.getBaseUrl() + this.action;
             console.log(urlCreate);
             
             let formData = new FormData();
             formData.append('file', this.file);
             axios.post( urlCreate,formData,{headers: this.headers})
-            .then((response) => (this.uploaded = response.data))
-            .catch(error => console.log(error));
+            .then(this.progress())
+            .then((response) =>{
+                this.listFile()//chama list para atualizar 
+            })
+            .catch((error) => {
+                console.log(error)
+                this.erro = "Erro ao enviar arquivo"
+            });
+        },
+        progress(){
+            let count = 0;
+            setTimeout(()=>{ this.width = count++; }, 200)
         },
         // listagem dos arquivos existentes
-        list(){
+        listFile(){
             let urlIndex = this.getBaseUrl() + this.action;
             axios
             .get(urlIndex)
             .then((response) => (this.uploaded = response.data))
+            .then(this.forUpload = false)
             .catch(error => console.log(error));
         },
+        showFile(id){
+            let urlIndex = this.getBaseUrl() + this.action + '/' + id;
+            window.open(urlIndex, "_blank")
+        },
         // apagar arquivo
-        remove(id){
+        removeFile(id){
             let urlDelete = this.getBaseUrl() + this.action + '/' + id;
 
             axios
             .delete(urlDelete)
-            .then((response) => this.list())//chama list para atualizar
+            .then((response) => this.listFile())//chama list para atualizar
             .catch(error => console.log(error));
         },
         getBaseUrl(){
@@ -136,6 +159,9 @@
       }
     }
 </script>
-<style>
- 
+
+<style scope>
+.bgicon{
+    color: white;
+}
 </style>
