@@ -3,7 +3,7 @@
         <div v-if="title" class="card-header">
             {{ title }}
         </div>
-        <div v-if="only" class="card-body">
+        <div v-if="!only" class="card-body">
 
             <label v-if="!forUpload" class="btn btn-primary bgicon" for='file'>
                 Selecionar arquivo
@@ -36,14 +36,14 @@
                     <table class="table table-hover">
                         <thead>
                             <tr>
-                                <th class="col-sm-2">#</th>
+                                <th v-if="!only" class="col-sm-2">#</th>
                                 <th class="col-sm-8">Nome/link</th>
                                 <th class="col-sm-2">Ações</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr v-for="(u, index) in uploaded" :key="u.id">
-                                <td>{{index}}</td>
+                            <tr v-for="(u, index) in uploaded" :key="index">
+                                <td v-if="!only">{{ counter = u.id }}</td>
                                 <td>
                                     {{ u.name}}
                                 </td>
@@ -69,116 +69,119 @@
 
 <script>
     export default {
-      props: ['title','action','ext','params','unique'],
-      data() {
-          return {
-            file: '',
-            uploaded: [],
-            forUpload: false,
-            error: false,
-            progressBar: false,
-            width: 0,
-            only: false,
-            headers: {
+    props: ['title','action','ext','params','unique'],
+    data() {
+        return {
+        file: '',
+        uploaded: [],
+        forUpload: false,
+        error: false,
+        progressBar: false,
+        width: 0,
+        only: false,
+        headers: {
             'Content-Type': 'multipart/form-data'
             },
-          }
-      },
-      // depois de montado
-      beforeMount(){
-          this.listFile(); 
-      },
-      methods: {
-        // antes de ser feito o upload
-        verifyType(){
-          this.file = this.$refs.file.files[0];
-          let filetype = this.file.type.split('/')[1];
+        counter: 0
+        }
+    },
+    // depois de montado
+    beforeMount(){
+        this.listFile(); 
+    },
+    watch: {
+        counter() {
+            this.verifyOnly();
+        }
+    },
+    methods: {
+    // envio do arquivo
+    createFile(){
+        let urlCreate = this.getBaseUrl() + this.action;
+        
+        let formData = new FormData();
+        formData.append('file', this.file);
+        axios.post( urlCreate,formData,{headers: this.headers})
+        .then(this.progress())
+        .catch((error) => {
+            console.log(error)
+            this.erro = "Erro ao enviar arquivo"
+        });
+    },
+    // listagem dos arquivos existentes
+    listFile(){
+        let urlIndex = this.getBaseUrl() + this.action;
+        axios
+        .get(urlIndex)
+        .then((response) => {
+            this.uploaded = response.data
+            this.counter = response.data.length
+        })
+        .catch(error => console.log(error));
+    },
+    showFile(id){
+        let urlIndex = this.getBaseUrl() + this.action + '/' + id;
+        window.open(urlIndex, "_blank")
+    },
+    // apagar arquivo
+    removeFile(id){
+        let urlDelete = this.getBaseUrl() + this.action + '/' + id;
+        axios
+        .delete(urlDelete)
+        .then((response) => this.listFile())//chama list para atualizar
+        .catch(error => console.log(error));
+    },
+    // antes de ser feito o upload
+    verifyType(){
+        this.file = this.$refs.file.files[0];
+        let filetype = this.file.type.split('/')[1];
 
-          if (!this.ext.includes(filetype)) {
+        if (!this.ext.includes(filetype)) {
             this.forUpload = false;
             this.error = 'Extenção inválida! deve ser: ' + this.ext.join(', ');
             this.file = '';
-          }else{
+        }else{
             this.error = false;
             this.forUpload = true;
-          }
-          
-        },
-        // verificar se é upload unico
-        verifyOnly(){
-            console.log(this.unique);
-            console.log(this.uploaded.length);
-            
-            if(this.unique == true && this.uploaded.length >= 0){
-                this.only = true;
-            }
-            console.log(this.only);
-            
-        },
-        // retornar ao inicial
-        cancelFile(){
-          this.file ='';
-          this.forUpload = false;
-        },
-        // envio do arquivo
-        createFile(){
-            let urlCreate = this.getBaseUrl() + this.action;
-            console.log(urlCreate);
-            
-            let formData = new FormData();
-            formData.append('file', this.file);
-            axios.post( urlCreate,formData,{headers: this.headers})
-            .then(this.progress())
-            .catch((error) => {
-                console.log(error)
-                this.erro = "Erro ao enviar arquivo"
-            });
-        },
-        progress(){
-            this.progressBar = true;
-            setTimeout(()=>{ 
-                    if(this.width < 100) {
-                        this.width += 1; 
-                        this.progress();
-                    }else{
-                        this.width = 0;
-                        this.listFile();
-                        this.cancelFile(); 
-                        this.progressBar = false;
-                    }
-                }, 25);
-            
-        },
-        // listagem dos arquivos existentes
-        listFile(){
-            let urlIndex = this.getBaseUrl() + this.action;
-            axios
-            .get(urlIndex)
-            .then((response) => (this.uploaded = response.data))
-            .then(console.log(this.uploaded))
-            .then(this.verifyOnly())
-            .catch(error => console.log(error));
-        },
-        showFile(id){
-            let urlIndex = this.getBaseUrl() + this.action + '/' + id;
-            window.open(urlIndex, "_blank")
-        },
-        // apagar arquivo
-        removeFile(id){
-            let urlDelete = this.getBaseUrl() + this.action + '/' + id;
-
-            axios
-            .delete(urlDelete)
-            .then((response) => this.listFile())//chama list para atualizar
-            .catch(error => console.log(error));
-        },
-        getBaseUrl(){
-           let getUrl = window.location; 
-           let params = this.params ? this.params + '/' : '';
-           let baseUrl = getUrl.protocol + "//" + getUrl.host + "/" + getUrl.pathname.split('/')[1]+"/"+params;
-           
-        return baseUrl;
         }
+        
+    },
+    // verificar se é upload unico
+    verifyOnly(){         
+        if(this.unique == true && this.counter > 0){
+            this.only = true;
+        }else{
+            this.only = false;
+        }
+        
+    },
+    // retornar ao inicial
+    cancelFile(){
+        this.file ='';
+        this.forUpload = false;
+    },
+    getBaseUrl(){
+        let getUrl = window.location; 
+        let params = this.params ? this.params + '/' : '';
+        let baseUrl = getUrl.protocol + "//" + getUrl.host + "/" + getUrl.pathname.split('/')[1]+"/"+params;
+        
+    return baseUrl;
+    },
+    // barra de progresso
+    progress(){
+        this.progressBar = true;
+        setTimeout(()=>{ 
+                if(this.width < 100) {
+                    this.width += 1; 
+                    this.progress();
+                }else{
+                    this.width = 0;
+                    this.listFile();
+                    this.cancelFile(); 
+                    this.progressBar = false;
+                }
+            }, 25);  
+        },
       }
     }
 </script>
