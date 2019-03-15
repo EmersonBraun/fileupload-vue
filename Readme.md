@@ -6,7 +6,51 @@
 Pré requisitos:
 Laravel >= 5.5.*
 Bootstrap 4 (apenas o css)  
-Font-Awesome (para os icones)
+Font-Awesome (para os icones, não obrigatórios)
+
+Props   | default | obs
+--------|---------|--------------------------------------------------------------------
+title   | null    | sem título aparece apenas o botão
+action  | null    | **Obrigatório** url do resource
+:ext    | null    | Array com extenções válidas
+:unique | false   | Se for true é possivel fazer apenas um upload no campo
+params  | null    | mais informações na rota antes do resource
+
+**Configuração do Vue**
+
+Caso não tenha iniciado o Vue dê os comados:
+
+```
+npm install
+```
+
+**Obs: o Vue precisa ter uma tag com id="app" ou outra definida dentro de resources/assets/js/app.js no objeto Vue em el: '#app'**
+
+Na pasta resources/assets/js clone esse repositório:
+
+```
+git clone https://github.com/EmersonBraun/fileupload-laravel-vue.git
+```
+
+Registre o componente em resources/assets/js/app.js
+
+
+```
+Vue.component('file-upload', require('./fileupload-laravel-vue/FileUpload.vue'));
+```
+
+Exemplo de chamada:
+
+```
+<file-upload 
+    title="Arquivos"
+    action="fileupload"
+    :ext="['png','jpeg','jpg']" 
+    :unique="true"
+    params="/admin" 
+    >
+</file-upload>
+```
 
 ## Configuração do Laravel:
 
@@ -173,40 +217,9 @@ class FileUploadController extends Controller
 }
 ```
 
-**Configuração do Vue**
-
-Caso não tenha iniciado o Vue dê os comados:
-
-```
-npm install
-```
-
-**Obs: o Vue precisa ter uma tag com id="app" ou outra definida dentro de resources/assets/js/app.js no objeto Vue em el: '#app'**
-
-Na pasta resources/assets/js clone esse repositório:
-
-```
-git clone https://github.com/EmersonBraun/fileupload-laravel-vue.git
-```
-
-Registre o componente em resources/assets/js/app.js
-
-
-```
-Vue.component('file-upload', require('./fileupload-laravel-vue/FileUpload.vue'));
-```
-
-Agora só chamar em qualquer view assim:
-
-```
-<file-upload 
-    action="fileupload"
-    :ext="['png','jpeg','jpg']" 
-    >
-</file-upload>
-```
 
 
 Baseado em:  
-https://medium.com/@arthursorriso/upload-de-arquivos-com-laravel-e-vuejs-9317cc0097c4
-https://appdividend.com/2018/02/13/vue-js-laravel-file-upload-tutorial/
+[medium](https://medium.com/@arthursorriso/upload-de-arquivos-com-laravel-e-vuejs-9317cc0097c4 "upload-de-arquivos-com-laravel-e-vuejs")
+[appdividend](https://appdividend.com/2018/02/13/vue-js-laravel-file-upload-tutorial/ "vue-js-laravel-file-upload-tutorial")
+
