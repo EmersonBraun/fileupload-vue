@@ -1,11 +1,13 @@
 <template>
     <div class="card">
-
-        <div class="card-header">
+        <div v-if="title" class="card-header">
+            {{ title }}
+        </div>
+        <div v-if="only" class="card-body">
 
             <label v-if="!forUpload" class="btn btn-primary bgicon" for='file'>
                 Selecionar arquivo
-                <input @change="handleFileUpload" id="file" ref="file" type='file' style="display:none">
+                <input @change="verifyType" id="file" ref="file" type='file' style="display:none">
             </label>
               
             <a v-if="forUpload" @click="cancelFile()" class="btn btn-danger bgicon" style="color: white">
@@ -22,13 +24,13 @@
                 {{error}}
             </span>
 
-            <div  v-if="forUpload" class="progress" style="padding-top: 3px">
-                <div class="progress-bar" role="progressbar" :style="{'width' : width + '%'}" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+            <div  v-if="progressBar" class="progress" style="padding-top: 3px">
+                <div class="progress-bar" role="progressbar" :style="{'width' : width + '%'}" :aria-valuenow="width" aria-valuemin="0" aria-valuemax="100"></div>
             </div>
             
         </div>
 
-        <div v-if="this.uploaded.length" class="card-body"> 
+        <div v-if="uploaded.length" class="card-footer"> 
             <div class="row">
                 <div class="col-sm-12">
                     <table class="table table-hover">
@@ -40,7 +42,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr v-for="(u , index) in uploaded">
+                            <tr v-for="(u, index) in uploaded" :key="u.id">
                                 <td>{{index}}</td>
                                 <td>
                                     {{ u.name}}
@@ -67,17 +69,19 @@
 
 <script>
     export default {
-      props: ['action','ext','params'],
+      props: ['title','action','ext','params','unique'],
       data() {
           return {
-              file: '',
-              uploaded: [],
-              forUpload: false,
-              error: false,
-              headers: {
-                'Content-Type': 'multipart/form-data'
-              },
-              width: 0,
+            file: '',
+            uploaded: [],
+            forUpload: false,
+            error: false,
+            progressBar: false,
+            width: 0,
+            only: false,
+            headers: {
+            'Content-Type': 'multipart/form-data'
+            },
           }
       },
       // depois de montado
@@ -86,7 +90,7 @@
       },
       methods: {
         // antes de ser feito o upload
-        handleFileUpload(){
+        verifyType(){
           this.file = this.$refs.file.files[0];
           let filetype = this.file.type.split('/')[1];
 
@@ -99,6 +103,17 @@
             this.forUpload = true;
           }
           
+        },
+        // verificar se é upload unico
+        verifyOnly(){
+            console.log(this.unique);
+            console.log(this.uploaded.length);
+            
+            if(this.unique == true && this.uploaded.length >= 0){
+                this.only = true;
+            }
+            console.log(this.only);
+            
         },
         // retornar ao inicial
         cancelFile(){
@@ -114,21 +129,22 @@
             formData.append('file', this.file);
             axios.post( urlCreate,formData,{headers: this.headers})
             .then(this.progress())
-            .then((response) =>{
-                this.listFile()//chama list para atualizar 
-            })
             .catch((error) => {
                 console.log(error)
                 this.erro = "Erro ao enviar arquivo"
             });
         },
         progress(){
+            this.progressBar = true;
             setTimeout(()=>{ 
                     if(this.width < 100) {
                         this.width += 1; 
                         this.progress();
                     }else{
-                       this.cancelFile(); 
+                        this.width = 0;
+                        this.listFile();
+                        this.cancelFile(); 
+                        this.progressBar = false;
                     }
                 }, 25);
             
@@ -139,6 +155,8 @@
             axios
             .get(urlIndex)
             .then((response) => (this.uploaded = response.data))
+            .then(console.log(this.uploaded))
+            .then(this.verifyOnly())
             .catch(error => console.log(error));
         },
         showFile(id){

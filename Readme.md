@@ -10,12 +10,20 @@ Font-Awesome (para os icones)
 
 ## Configuração do Laravel:
 
-Para começar podemos configurar um disco em **config/filesystems.php**
+Para começar podemos configurar a subpasta de store onde vão ficar os arquivos  
+podemos configurar uma variável em **config/app.php**
+
+```
+'uploads' => '/files/uploads',
+```
+
+agora vamos poder sempre referenciar como config('app.uploads')
+depois podemos criar um disco em **config/filesystems.php**
 
 ```
     'uploads' => [
         'driver' => 'local',
-        'root' => storage_path().'/files/uploads',
+        'root' => storage_path().config('app.uploads'),
     ],
 ```
 
@@ -90,20 +98,22 @@ Um exemplo de controller
 ```
 use File;
 use Response;
+use Storage;
 Use App\FileUpload;
 
 class FileUploadController extends Controller
 {
-    public function index($id)
+    public function index()
     {
-        $list = Task::find($id)->images;
+        $list = FileUpload::all();
         return response()->json($list);
     }
 
     public function show($id)
     {
         $search = FileUpload::find($id);
-        $path = storage_path('files/uploads/'.$search->path.'/'.$search->name);
+        $config = config('app.uploads');
+        $path = storage_path($search->path);
         if (!File::exists($path)) {
             abort(404);
         }
@@ -122,15 +132,15 @@ class FileUploadController extends Controller
     {
         $file = $request->file('file');
         $filename = $file->getClientOriginalName();
+        $folder = hash( 'sha256', time());
+        $config = (!is_null(config('app.uploads'))) ? config('app.uploads') : '' ;
+        $path = $config.'/'.$folder.'/'.$filename;
 
-        $path = hash( 'sha256', time());
-        $local = $path.'/'.$filename;
-
-        if(Storage::disk('uploads')->put($local,  $file)) {
+        if(Storage::disk('uploads')->putFileAs($folder,  $file, $filename)) {
             $fileUpload = new FileUpload();
             $fileUpload->name = $filename;
             $fileUpload->mime = $file->getClientMimeType();
-            $fileUpload->path = $local;
+            $fileUpload->path = $path;
             $fileUpload->size = $file->getClientSize();
             $fileUpload->save();
 
@@ -148,7 +158,8 @@ class FileUploadController extends Controller
     {
         $search =  FileUpload::find($id);
         FileUpload::find($id)->delete();
-        $path = storage_path('files/uploads/'.$search->path.'/'.$search->name);
+        $config = config('app.uploads');
+        $path = storage_path($search->path);
         if (file_exists($path)) {
             unlink($path);
             return response()->json([
@@ -158,7 +169,6 @@ class FileUploadController extends Controller
         return response()->json([
             'success' => false
         ], 500);
-
     }
 }
 ```
