@@ -1,6 +1,8 @@
 # FIleUpload Laravel Vue
 ## Upload de arquivos com componente Vue e Axios 
 
+![fileupload](https://github.com/EmersonBraun/fileupload-laravel-vue/blob/master/fileupload.gif)
+
 ### Exemplo de utilização no Laravel >= 5.5.* e Vue 2
 
 Pré requisitos:
